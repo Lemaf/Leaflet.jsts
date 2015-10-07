@@ -21,7 +21,7 @@
   ],
   "dependencies": {
     "chai": "3.3.0",
-    "leaflet-dist": "0.7.5",
+    "leaflet": "~0.7",
     "jsts": "0.13.4"
   }
 }
