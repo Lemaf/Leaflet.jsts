@@ -3,17 +3,24 @@ Server = require('karma').Server,
 bower = require('gulp-bower'),
 concat = require('gulp-concat'),
 uglify = require('gulp-uglify'),
-rename = require('gulp-rename')
+rename = require('gulp-rename'),
+del = require('del')
 ;
+
+gulp.task('clean:dist', function() {
+	return del(['./dist/**/*.js']);
+});
 
 gulp.task('bower', function() {
 	return bower()
 		.pipe(gulp.dest('lib/'))
 });
 
-gulp.task('concat:js', function() {
+gulp.task('concat:js', ['clean:dist'], function() {
 
 	return gulp.src([
+		'src/L.jsts.js',
+		'src/mixin/*.js',
 		'src/ext/*.js'
 	])
 	.pipe(concat('leaflet.jsts.js'))
@@ -30,7 +37,7 @@ gulp.task('uglify:js', ['concat:js'], function() {
 	.pipe(gulp.dest('./dist'));
 });
 
-gulp.task('test', ['bower'], function (done) {
+gulp.task('test', ['bower', 'concat:js'], function (done) {
 
 	new Server({
 		configFile: __dirname + '/karma.conf.js',
@@ -38,3 +45,5 @@ gulp.task('test', ['bower'], function (done) {
 	}, done).start();
 
 });
+
+gulp.task('build', ['uglify:js']);

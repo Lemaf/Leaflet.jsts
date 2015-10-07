@@ -20,7 +20,9 @@
     "url": "https://github.com/Lemaf/Leaflet.jsts/issues"
   },
   "homepage": "https://github.com/Lemaf/Leaflet.jsts#readme",
-  "dependencies": {},
+  "dependencies": {
+    "del": "^2.0.2"
+  },
   "devDependencies": {
     "gulp": "^3.9.0",
     "gulp-bower": "0.0.10",

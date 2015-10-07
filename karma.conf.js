@@ -20,6 +20,7 @@ module.exports = function(config) {
       'lib/leaflet/dist/leaflet.js',
       'lib/chai/chai.js',
       'src/*.js',
+      'src/mixin/*.js',
       'src/ext/*.js',
       'tests/**/*Spec.js'
     ],

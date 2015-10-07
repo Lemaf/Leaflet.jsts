@@ -1,96 +1,6 @@
 ;(function () {
 
-	var BINARY_TEST_METHODS = [
-		'intersects',
-		'within'
-	];
-
-	var BINARY_TOPOLOGY_METHODS = [
-		'intersection',
-		'union',
-		'difference'
-	];
-
 	var FACTORY = new jsts.geom.GeometryFactory();
-
-	var EMPTY_POLYGON = FACTORY.createPolygon(FACTORY.createLinearRing([]), []),
-	EMPTY_MULTIPOLYGON = FACTORY.createMultiPolygon([EMPTY_POLYGON]),
-	EMPTY_LINESTRING = FACTORY.createLineString([]),
-	EMPTY_MULTILINESTRING = FACTORY.createMultiLineString([EMPTY_LINESTRING]);
-
-	var BINARY_TOPOLOGY_MIXIN = {}, BINARY_TEST_MIXIN = {};
-
-	var slice = Array.prototype.slice;
-
-	BINARY_TEST_METHODS.forEach(function (methodName) {
-		BINARY_TEST_MIXIN[methodName] = function () {
-			return invokeTestMethod.apply(this, [methodName].concat(slice.call(arguments, 0)));
-		};
-	});
-
-	BINARY_TOPOLOGY_METHODS.forEach(function (methodName) {
-		BINARY_TOPOLOGY_MIXIN[methodName] = function () {
-			return invokeTopologyMethod.apply(this, [methodName].concat(slice.call(arguments, 0)));
-		};
-	});
-
-
-	function invokeTestMethod (methodName, layer) {
-		var thisJstsGeometry = this.getJstsGeometry();
-		var otherJstsGeometry = layer.getJstsGeometry();
-
-		if (arguments.length < 3)
-			return thisJstsGeometry[methodName](otherJstsGeometry);
-		else {
-			var args = [otherJstsGeometry].concat(slice.call(arguments, 2));
-			return thisJstsGeometry[methodName].apply(thisJstsGeometry, args);
-		}
-	}
-
-	function invokeTopologyMethod (methodName, layer) {
-		var thisJstsGeometry = this.getJstsGeometry();
-		var otherJstsGeometry = layer.getJstsGeometry();
-
-		var result;
-
-		if (arguments.length < 3)
-			result = thisJstsGeometry[methodName](otherJstsGeometry);
-		else {
-			var args = [otherJstsGeometry].concat(slice.call(arguments, 2));
-			result = thisJstsGeometry[methodName].apply(thisJstsGeometry, args);
-		}
-
-		if (!result.isEmpty())
-			return LEAFLET.from(result, this.options);
-
-		layer = new this.constructor([], this.options);
-
-		if (this instanceof L.MultiPolygon)
-			layer._jstsGeometry = EMPTY_MULTIPOLYGON;
-		else if (this instanceof L.MultiPolyline)
-			layer._jstsGeometry = EMPTY_MULTILINESTRING;
-		else if (this instanceof L.Polygon)
-			layer._jstsGeometry = EMPTY_POLYGON;
-		else if (this instanceof L.Polyline)
-			layer._jstsGeometry = EMPTY_LINESTRING;
-		else
-			throw new Error('Unsupported L.Path type');
-
-		return layer;
-	}
-
-	L.Path.include(BINARY_TEST_MIXIN);
-	L.Path.include(BINARY_TOPOLOGY_MIXIN);
-
-	L.Path.include({
-		getJstsGeometry: function () {
-			if (!this._jstsGeometry)
-				this._jstsGeometry = JSTS.from(this);
-			
-
-			return this._jstsGeometry;
-		}
-	});
 
 	var LEAFLET = {
 		from: function (geometry, options) {
@@ -238,4 +148,167 @@
 		}
 	};
 
+
+	if (!L.jsts)
+		L.jsts = {};
+
+	var EMPTY_POLYGON = FACTORY.createPolygon(FACTORY.createLinearRing([]), []),
+	EMPTY_MULTIPOLYGON = FACTORY.createMultiPolygon([EMPTY_POLYGON]),
+	EMPTY_LINESTRING = FACTORY.createLineString([]),
+	EMPTY_MULTILINESTRING = FACTORY.createMultiLineString([EMPTY_LINESTRING]);
+
+	L.extend(L.jsts, {
+
+		FACTORY: FACTORY,
+
+		EMPTY_POLYGON: EMPTY_POLYGON,
+
+		EMPTY_MULTIPOLYGON: EMPTY_MULTIPOLYGON,
+
+		EMPTY_LINESTRING: EMPTY_LINESTRING,
+
+		EMPTY_MULTILINESTRING: EMPTY_MULTILINESTRING,
+
+		leafletTojsts: function (layer) {
+			return JSTS.from(layer);
+		},
+
+		jstsToleaflet: function (geometry, options) {
+			return LEAFLET.from(geometry, options);
+		}
+
+	});
+
 })();
+(function () {
+
+	var METHODS = [
+		'intersects',
+		'within'
+	];
+
+	L.jsts.BinaryTest = {};
+
+	var slice = Array.prototype.slice;
+
+	METHODS.forEach(function (methodName) {
+		L.jsts.BinaryTest[methodName] = function () {
+			return invokeTestMethod.apply(this, [methodName].concat(slice.call(arguments, 0)));
+		};
+	});
+
+	function invokeTestMethod (methodName, layer) {
+		var thisJstsGeometry = this.getJstsGeometry();
+		var otherJstsGeometry = layer.getJstsGeometry();
+
+		if (arguments.length < 3)
+			return thisJstsGeometry[methodName](otherJstsGeometry);
+		else {
+			var args = [otherJstsGeometry].concat(slice.call(arguments, 2));
+			return thisJstsGeometry[methodName].apply(thisJstsGeometry, args);
+		}
+	}
+	
+})();
+;(function () {
+
+	L.jsts.BinaryTopology = {};
+
+	var slice = Array.prototype.slice;
+
+	var METHODS = [
+		'intersection',
+		'union',
+		'difference'
+	];
+
+	METHODS.forEach(function (methodName) {
+		L.jsts.BinaryTopology[methodName] = function () {
+			return invokeTopologyMethod.apply(this, [methodName].concat(slice.call(arguments, 0)));
+		};
+	});
+
+
+	function invokeTopologyMethod (methodName, layer) {
+		var thisJstsGeometry = this.getJstsGeometry();
+		var otherJstsGeometry = layer.getJstsGeometry();
+
+		var result;
+
+		if (arguments.length < 3)
+			result = thisJstsGeometry[methodName](otherJstsGeometry);
+		else {
+			var args = [otherJstsGeometry].concat(slice.call(arguments, 2));
+			result = thisJstsGeometry[methodName].apply(thisJstsGeometry, args);
+		}
+
+		if (!result.isEmpty())
+			return L.jsts.jstsToleaflet(result, this.options);
+
+		layer = new this.constructor([], this.options);
+
+		if (this instanceof L.MultiPolygon)
+			layer._jstsGeometry = L.jsts.EMPTY_MULTIPOLYGON;
+		else if (this instanceof L.MultiPolyline)
+			layer._jstsGeometry = L.jsts.EMPTY_MULTILINESTRING;
+		else if (this instanceof L.Polygon)
+			layer._jstsGeometry = L.jsts.EMPTY_POLYGON;
+		else if (this instanceof L.Polyline)
+			layer._jstsGeometry = L.jsts.EMPTY_LINESTRING;
+		else
+			throw new Error('Unsupported L.Path type');
+
+		return layer;
+	}
+
+})();
+L.FeatureGroup.include(L.jsts.BinaryTest);
+
+L.FeatureGroup.include({
+
+	getJstsGeometry: function () {
+
+		if (!this._jstsGeometry) {
+			var jstsGeometry  = L.jsts.EMPTY_MULTIPOLYGON;
+
+			this.eachLayer(function(layer) {
+				var localGeometry = layer.getJstsGeometry();
+
+				// TODO: Slow...
+				if (jstsGeometry) {
+					jstsGeometry = jstsGeometry.union(localGeometry);
+				} else {
+					jstsGeometry = localGeometry;
+				}
+
+			});
+
+			this._jstsGeometry = jstsGeometry;
+		}
+
+		return this._jstsGeometry;
+	},
+
+	_cleanJstsGeometry: function () {
+		delete this._jstsGeometry;
+	}
+
+});
+
+L.FeatureGroup.addInitHook(function() {
+
+	this.on('layeradd', this._cleanJstsGeometry, this);
+	this.on('layerremove', this._cleanJstsGeometry, this);
+
+});
+L.Path.include(L.jsts.BinaryTest);
+L.Path.include(L.jsts.BinaryTopology);
+
+L.Path.include({
+	getJstsGeometry: function () {
+		if (!this._jstsGeometry)
+			this._jstsGeometry = L.jsts.leafletTojsts(this);
+
+		return this._jstsGeometry;
+	}
+});
