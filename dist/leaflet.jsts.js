@@ -199,7 +199,12 @@
 
 	function invokeTestMethod (methodName, layer) {
 		var thisJstsGeometry = this.getJstsGeometry();
+		if (thisJstsGeometry.isEmpty())
+			return false;
+
 		var otherJstsGeometry = layer.getJstsGeometry();
+		if (otherJstsGeometry.isEmpty())
+			return false;
 
 		if (arguments.length < 3)
 			return thisJstsGeometry[methodName](otherJstsGeometry);
