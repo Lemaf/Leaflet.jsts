@@ -1,0 +1,26 @@
+{
+  "name": "Leaflet.jsts",
+  "version": "1.0.0",
+  "homepage": "https://github.com/Lemaf/Leaflet.jsts",
+  "authors": [
+    "rthoth <ronaldo.silva@lemaf.ufla.br>"
+  ],
+  "description": "Leaftlet + jsts = :) ?",
+  "main": "dist/leaflet.jsts.js",
+  "keywords": [
+    "leaflet",
+    "jsts"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "leaflet": "0.7.5",
+    "jsts": "0.13.4"
+  }
+}

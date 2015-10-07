@@ -1,0 +1,37 @@
+{
+  "name": "leaflet.jsts",
+  "version": "1.0.0",
+  "description": "Leaflet + jsts = :) ?",
+  "main": "dist/leaflet.jsts.js",
+  "scripts": {
+    "test": "casper test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lemaf/Leaflet.jsts.git"
+  },
+  "keywords": [
+    "leaflet",
+    "jsts"
+  ],
+  "author": "rthoth <ronaldo.silva@lemaf.ufla.br>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Lemaf/Leaflet.jsts/issues"
+  },
+  "homepage": "https://github.com/Lemaf/Leaflet.jsts#readme",
+  "dependencies": {},
+  "devDependencies": {
+    "gulp": "^3.9.0",
+    "gulp-bower": "0.0.10",
+    "gulp-karma": "0.0.5",
+    "karma": "^0.13.10",
+    "karma-chrome-launcher": "^0.2.0",
+    "karma-firefox-launcher": "^0.1.6",
+    "karma-ie-launcher": "^0.2.0",
+    "karma-mocha": "^0.2.0",
+    "karma-safari-launcher": "^0.1.1",
+    "mocha": "^2.3.3",
+    "vinyl": "^1.0.0"
+  }
+}
