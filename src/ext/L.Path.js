@@ -70,68 +70,6 @@
 		}
 	});
 
-	var JSTS = {
-		from: function (layer) {
-
-			var coordinates, geometries;
-
-			if (layer instanceof L.MultiPolygon) {
-
-				coordinates = layer.getLatLngs().map(this.multiLatLngsToCoordinates, this);
-				geometries = coordinates.map(this.coordinatesToPolygon, this);
-				return FACTORY.createMultiPolygon(geometries);
-
-			} else if (layer instanceof L.MultiPolyline) {
-
-				coordinates = latlngs.getLatLngs().map(this.multiLatLngsToCoordinates, this);
-				geometries = coordinates.map(this.coordinatesToLineString, this);
-				return FACTORY.createMultiLineString(geometries);
-
-			} else if (layer instanceof L.Polygon) {
-
-				coordinates = this.multiLatLngsToCoordinates(layer.getLatLngs());
-				return this.coordinatesToPolygon(coordinates);
-
-			} else if (layer instanceof L.Polyline) {
-
-				coordinates = this.latLngsToCoordinates(layer.getLatLngs());
-				return this.coordinatesToLineString(coordinates);
-
-			} else {
-				throw new Error('Unsupported layer');
-			}
-		},
-
-		coordinatesToLineString: function (coordinates) {
-			return FACTORY.createLineString(coordinates);
-		},
-
-		coordinatesToPolygon: function (coordinates) {
-			if (coordinates.length  < 2)
-				return FACTORY.createPolygon(coordinates[0], []);
-			else
-				return FACTORY.createPolygon(coordinates[0], coordinates.slice(1));
-		},
-
-		latLngToCoordinate: function (latlng) {
-			return new jsts.geom.Coordinate(latlng.lng, latlng.lat);
-		},
-
-		latLngsToCoordinates: function (latlngs) {
-			return latlngs.map(this.latLngToCoordinate, this);
-		},
-
-		multiLatLngsToCoordinates: function (latlngs) {
-			if (!latlngs.length)
-				return [];
-
-			if (Array.isArray(latlngs[0]))
-				latlngs.map(this.latLngsToCoordinates, this);
-			else
-				latlngs.map(this.latLngToCoordinate, this);
-		}
-	};
-
 	var LEAFLET = {
 		from: function (geometry) {
 			var latlngs, Type;
@@ -197,6 +135,73 @@
 			}
 
 			return !holes.length ? shell : [shell].concat(holes);
+		}
+	};
+
+	var JSTS = {
+		from: function (layer) {
+
+			var coordinates, geometries;
+
+			if (layer instanceof L.MultiPolygon) {
+
+				coordinates = layer.getLatLngs().map(this.multiLatLngsToCoordinates, this);
+				geometries = coordinates.map(this.coordinatesToPolygon, this);
+				return FACTORY.createMultiPolygon(geometries);
+
+			} else if (layer instanceof L.MultiPolyline) {
+
+				coordinates = latlngs.getLatLngs().map(this.multiLatLngsToCoordinates, this);
+				geometries = coordinates.map(this.coordinatesToLineString, this);
+				return FACTORY.createMultiLineString(geometries);
+
+			} else if (layer instanceof L.Polygon) {
+
+				coordinates = this.multiLatLngsToCoordinates(layer.getLatLngs());
+				return this.coordinatesToPolygon(coordinates);
+
+			} else if (layer instanceof L.Polyline) {
+
+				coordinates = this.latLngsToCoordinates(layer.getLatLngs());
+				return this.coordinatesToLineString(coordinates);
+
+			} else {
+				throw new Error('Unsupported layer');
+			}
+		},
+
+		coordinatesToLinearRing: function(coordinates) {
+			return FACTORY.createLinearRing(coordinates.concat(coordinates[0]));
+		},
+
+		coordinatesToLineString: function (coordinates) {
+			return FACTORY.createLineString(coordinates);
+		},
+
+		coordinatesToPolygon: function (coordinates) {
+			var rings = coordinates.map(this.coordinatesToLinearRing, this);
+			if (rings.length  < 2) {
+				return FACTORY.createPolygon(rings[0], []);
+			} else
+				return FACTORY.createPolygon(rings[0], rings.slice(1));
+		},
+
+		latLngToCoordinate: function (latlng) {
+			return new jsts.geom.Coordinate(latlng.lng, latlng.lat);
+		},
+
+		latLngsToCoordinates: function (latlngs) {
+			return latlngs.map(this.latLngToCoordinate, this);
+		},
+
+		multiLatLngsToCoordinates: function (latlngs) {
+			if (!latlngs.length)
+				return [];
+
+			if (Array.isArray(latlngs[0]))
+				return latlngs.map(this.latLngsToCoordinates, this);
+			else
+				return [latlngs.map(this.latLngToCoordinate, this)];
 		}
 	};
 

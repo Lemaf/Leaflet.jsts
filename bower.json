@@ -20,6 +20,7 @@
     "tests"
   ],
   "dependencies": {
+    "chai": "3.3.0",
     "leaflet": "0.7.5",
     "jsts": "0.13.4"
   }

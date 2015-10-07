@@ -1,9 +1,21 @@
-describe('A simple test', function() {
+describe('Leaflet to Jsts', function() {
 
-	it('ok', function() {
-		var leaflet = L.polygon([[-21, -45], [-22, -46], [-20, -45]]);
+	describe('should create geometry', function() {
+		
+		it('valid', function() {
+			var leaflet = L.polygon([[-21,-45], [-22,-46], [-20,-45]]);
+			var geometry = leaflet.getJstsGeometry();
 
-		var geometry = leaflet.getJstsGeometry();
+			chai.expect(geometry.isValid()).to.be.true;
+		});
+
+		it('equals to expected', function() {
+			var leaflet = L.polygon([[-21.10149597238205033,-44.78975834292290159], [-21.04069357382989125,-45.45113298575728322], [-22,-46], [-21.01319369528477665,-45.60515058773719943], [-20.5553509781357846,-46.21288837744534561], [-20.75965198705100079,-45.58080717815820293], [-20,-45], [-20.85345370092769457,-45.44745095096891419], [-21.10149597238205033,-44.78975834292290159]]);
+			var geometry = leaflet.getJstsGeometry();
+
+			chai.expect(geometry.toString()).to.equal('POLYGON((-44.7897583429229 -21.10149597238205,-45.45113298575728 -21.04069357382989,-46 -22,-45.6051505877372 -21.013193695284777,-46.212888377445346 -20.555350978135785,-45.5808071781582 -20.759651987051,-45 -20,-45.447450950968914 -20.853453700927695,-44.7897583429229 -21.10149597238205))')
+		});
 	});
+
 
 });
