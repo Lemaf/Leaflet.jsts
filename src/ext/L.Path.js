@@ -1,11 +1,11 @@
 ;(function () {
 
-	var TEST_METHODS = [
+	var BINARY_TEST_METHODS = [
 		'intersects',
 		'within'
 	];
 
-	var TOPOLOGY_METHODS = [
+	var BINARY_TOPOLOGY_METHODS = [
 		'intersection',
 		'union',
 		'difference'
@@ -13,21 +13,27 @@
 
 	var FACTORY = new jsts.geom.GeometryFactory();
 
-	var TOPOLOGY_MIXIN = {}, TEST_MIXIN = {};
+	var EMPTY_POLYGON = FACTORY.createPolygon(FACTORY.createLinearRing([]), []),
+	EMPTY_MULTIPOLYGON = FACTORY.createMultiPolygon([EMPTY_POLYGON]),
+	EMPTY_LINESTRING = FACTORY.createLineString([]),
+	EMPTY_MULTILINESTRING = FACTORY.createMultiLineString([EMPTY_LINESTRING]);
 
-	TEST_METHODS.forEach(function (methodName) {
-		TEST_MIXIN[methodName] = function () {
-			return invokeTestMethod.apply(this, [methodName].concat(arguments));
-		};
-	});
-
-	TOPOLOGY_METHODS.forEach(function (methodName) {
-		TOPOLOGY_METHODS[methodName] = function () {
-			return invokeTopologyMethod.apply(this, [methodName].concat(arguments));
-		};
-	});
+	var BINARY_TOPOLOGY_MIXIN = {}, BINARY_TEST_MIXIN = {};
 
 	var slice = Array.prototype.slice;
+
+	BINARY_TEST_METHODS.forEach(function (methodName) {
+		BINARY_TEST_MIXIN[methodName] = function () {
+			return invokeTestMethod.apply(this, [methodName].concat(slice.call(arguments, 0)));
+		};
+	});
+
+	BINARY_TOPOLOGY_METHODS.forEach(function (methodName) {
+		BINARY_TOPOLOGY_MIXIN[methodName] = function () {
+			return invokeTopologyMethod.apply(this, [methodName].concat(slice.call(arguments, 0)));
+		};
+	});
+
 
 	function invokeTestMethod (methodName, layer) {
 		var thisJstsGeometry = this.getJstsGeometry();
@@ -54,11 +60,27 @@
 			result = thisJstsGeometry[methodName].apply(thisJstsGeometry, args);
 		}
 
-		return LEAFLET.from(result, this.options);
+		if (!result.isEmpty())
+			return LEAFLET.from(result, this.options);
+
+		layer = new this.constructor([], this.options);
+
+		if (this instanceof L.MultiPolygon)
+			layer._jstsGeometry = EMPTY_MULTIPOLYGON;
+		else if (this instanceof L.MultiPolyline)
+			layer._jstsGeometry = EMPTY_MULTILINESTRING;
+		else if (this instanceof L.Polygon)
+			layer._jstsGeometry = EMPTY_POLYGON;
+		else if (this instanceof L.Polyline)
+			layer._jstsGeometry = EMPTY_LINESTRING;
+		else
+			throw new Error('Unsupported L.Path type');
+
+		return layer;
 	}
 
-	L.Path.include(TEST_MIXIN);
-	L.Path.include(TOPOLOGY_MIXIN);
+	L.Path.include(BINARY_TEST_MIXIN);
+	L.Path.include(BINARY_TOPOLOGY_MIXIN);
 
 	L.Path.include({
 		getJstsGeometry: function () {
@@ -71,8 +93,8 @@
 	});
 
 	var LEAFLET = {
-		from: function (geometry) {
-			var latlngs, Type;
+		from: function (geometry, options) {
+			var latlngs, Type, layer;
 			if (geometry instanceof jsts.geom.MultiPolygon) {
 
 				latlngs = this.multiPolygonToLatLngs(geometry);
@@ -85,7 +107,7 @@
 
 			} else if (geometry instanceof jsts.geom.Polygon) {
 
-				latlngs = this.polygonToCoordinates(geometry);
+				latlngs = this.polygonToLatLngs(geometry);
 				Type = L.Polygon;
 
 			} else if (geometry instanceof jsts.geom.LineString) {
@@ -97,11 +119,22 @@
 				throw new Error('Unsupported geometry');
 			}
 
-			return new Type(latlngs, options);
+			layer = new Type(latlngs, options);
+			layer._jstsGeometry = geometry;
+
+			return layer;
 		},
 
 		coordinateToLatLng: function (coordinate) {
 			return new L.LatLng(coordinate.y, coordinate.x);
+		},
+
+		coordinatesToLatLngs: function(coordinates) {
+			return coordinates.map(this.coordinateToLatLng, this);
+		},
+
+		linearRingToLatLngs: function (linearRing) {
+			return this.coordinatesToLatLngs(linearRing.getCoordinates().slice(0, -1));
 		},
 
 		lineStringToCoordinates: function (lineString) {
@@ -120,18 +153,18 @@
 		multiPolygonToLatLngs: function (multiPolygon) {
 			var latlngs = [];
 			for (var i = 0, l = multiPolygon.getNumGeometries(); i < l; i++) {
-				latlngs.push(this.polygonToCoordinates(multiPolygon.getGeometryN(i)));
+				latlngs.push(this.polygonToLatLngs(multiPolygon.getGeometryN(i)));
 			}
 
 			return latlngs;
 		},
 
-		polygonToCoordinates: function (polygon) {
-			var shell = polygon.getExteriorRing().map(this.coordinateToLatLng, this);
+		polygonToLatLngs: function (polygon) {
+			var shell = this.linearRingToLatLngs(polygon.getExteriorRing());
 
 			var holes = [];
 			for (var i = 0, l = polygon.getNumInteriorRing(); i < l; i++) {
-				holes.push(polygon.getInteriorRingN(i).map(this.coordinateToLatLng, this));
+				holes.push(this.linearRingToLatLngs(polygon.getInteriorRingN(i)));
 			}
 
 			return !holes.length ? shell : [shell].concat(holes);

@@ -17,5 +17,4 @@ describe('Leaflet to Jsts', function() {
 		});
 	});
 
-
 });
