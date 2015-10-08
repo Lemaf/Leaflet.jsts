@@ -30,7 +30,7 @@ L.FeatureGroup.include({
 		throw new Error('Unsupported operation!');
 	},
 
-	_cleanJstsGeometry: function () {
+	jstsClean: function () {
 		delete this._jstsGeometry;
 	}
 
@@ -38,8 +38,8 @@ L.FeatureGroup.include({
 
 L.FeatureGroup.addInitHook(function() {
 
-	this.on('layeradd', this._cleanJstsGeometry, this);
-	this.on('layerremove', this._cleanJstsGeometry, this);
+	this.on('layeradd', this.jstsClean, this);
+	this.on('layerremove', this.jstsClean, this);
 
 });
 

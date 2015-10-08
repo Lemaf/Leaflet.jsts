@@ -1,45 +1,56 @@
-L.Path.include({
-	getJstsGeometry: function () {
-		if (!this._jstsGeometry)
-			this._jstsGeometry = L.jsts.leafletTojsts(this);
+;(function () {
 
-		return this._jstsGeometry;
-	},
+	var redraw = L.Path.prototype.redraw;
 
-	jstsCopy: function (geometry) {
-		var layer;
+	L.Path.include({
+		getJstsGeometry: function () {
+			if (!this._jstsGeometry)
+				this._jstsGeometry = L.jsts.leafletTojsts(this);
 
-		if (geometry.isEmpty()) {
+			return this._jstsGeometry;
+		},
 
-			layer = new this.constructor([], this.options);
+		jstsCopy: function (geometry) {
+			var layer;
 
-			if (this instanceof L.MultiPolygon)
-				geometry = L.jsts.EMPTY_MULTIPOLYGON;
-			else if (this instanceof L.MultiPolyline)
-				geometry = L.jsts.EMPTY_MULTILINESTRING;
-			else if (this instanceof L.Polygon)
-				geometry = L.jsts.EMPTY_POLYGON;
-			else if (this instanceof L.Polyline)
-				geometry = L.jsts.EMPTY_LINESTRING;
-			else
-				throw new Error('Unsupported L.Path type');
-		} else {
-			layer = L.jsts.jstsToleaflet(geometry, this.options);
+			if (geometry.isEmpty()) {
+
+				layer = new this.constructor([], this.options);
+
+				if (this instanceof L.MultiPolygon)
+					geometry = L.jsts.EMPTY_MULTIPOLYGON;
+				else if (this instanceof L.MultiPolyline)
+					geometry = L.jsts.EMPTY_MULTILINESTRING;
+				else if (this instanceof L.Polygon)
+					geometry = L.jsts.EMPTY_POLYGON;
+				else if (this instanceof L.Polyline)
+					geometry = L.jsts.EMPTY_LINESTRING;
+				else
+					throw new Error('Unsupported L.Path type');
+			} else {
+				layer = L.jsts.jstsToleaflet(geometry, this.options);
+			}
+
+			layer._jstsGeometry = geometry;
+
+			return layer;
+		},
+
+		redraw: function () {
+			delete this._jstsGeometry;
+			return redraw.apply(this, arguments);
+		}
+	});
+
+	Object.defineProperty(L.Path.prototype, "jsts", {
+
+		get: function() {
+			if (!this._jsts)
+				this._jsts = new L.Jsts(this);
+
+			return this._jsts;
 		}
 
-		layer._jstsGeometry = geometry;
+	});
 
-		return layer;
-	}
-});
-
-Object.defineProperty(L.Path.prototype, "jsts", {
-
-	get: function() {
-		if (!this._jsts)
-			this._jsts = new L.Jsts(this);
-
-		return this._jsts;
-	}
-
-});
+})();

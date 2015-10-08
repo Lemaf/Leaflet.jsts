@@ -22,7 +22,7 @@
 
 			} else if (geometry instanceof jsts.geom.LineString) {
 
-				latlngs = this.lineStringToCoordinates(geometry);
+				latlngs = this.lineStringToLatLngs(geometry);
 				Type = L.Polyline;
 
 			} else {
@@ -44,14 +44,14 @@
 			return this.coordinatesToLatLngs(linearRing.getCoordinates().slice(0, -1));
 		},
 
-		lineStringToCoordinates: function (lineString) {
+		lineStringToLatLngs: function (lineString) {
 			return lineString.getCoordinates().map(this.coordinateToLatLng, this);
 		},
 
 		multiLineStringToLatLngs: function (multiLineString) {
 			var latlngs = [];
 			for (var i = 0, l = multiLineString.getNumGeometries(); i < l; i++) {
-				latlngs.push(this.lineStringToCoordinates(multiLineString.getGeometryN(i)));
+				latlngs.push(this.lineStringToLatLngs(multiLineString.getGeometryN(i)));
 			}
 
 			return latlngs;
@@ -172,6 +172,22 @@
 
 		jstsToleaflet: function (geometry, options) {
 			return LEAFLET.from(geometry, options);
+		},
+
+		jstsToLatLngs: function (geometry) {
+			if (geometry instanceof jsts.geom.MultiPolygon)
+				return LEAFLET.multiPolygonToLatLngs(geometry);
+
+			if (geometry instanceof jsts.geom.MultiLineString)
+				return LEAFLET.multiLineStringToLatLngs(geometry);
+
+			if (geometry instanceof jsts.geom.Polygon)
+				return LEAFLET.polygonToLatLngs(geometry);
+
+			if (geometry instanceof jsts.geom.LineString)
+				return LEAFLET.lineStringToLatLngs(geometry);
+
+			throw new Error('Unsupported geometry');
 		}
 
 	});
@@ -185,6 +201,11 @@
 
 		initialize: function (target) {
 			this._target = target;
+		},
+
+		clean: function() {
+			if (this._target.jstsClean)
+				this._target.jstsClean();
 		},
 
 		geometry: function () {
@@ -296,7 +317,7 @@ L.FeatureGroup.include({
 		throw new Error('Unsupported operation!');
 	},
 
-	_cleanJstsGeometry: function () {
+	jstsClean: function () {
 		delete this._jstsGeometry;
 	}
 
@@ -304,8 +325,8 @@ L.FeatureGroup.include({
 
 L.FeatureGroup.addInitHook(function() {
 
-	this.on('layeradd', this._cleanJstsGeometry, this);
-	this.on('layerremove', this._cleanJstsGeometry, this);
+	this.on('layeradd', this.jstsClean, this);
+	this.on('layerremove', this.jstsClean, this);
 
 });
 
@@ -317,48 +338,59 @@ Object.defineProperty(L.FeatureGroup.prototype, 'jsts', {
 		return this._jsts;
 	}
 });
-L.Path.include({
-	getJstsGeometry: function () {
-		if (!this._jstsGeometry)
-			this._jstsGeometry = L.jsts.leafletTojsts(this);
+;(function () {
 
-		return this._jstsGeometry;
-	},
+	var redraw = L.Path.prototype.redraw;
 
-	jstsCopy: function (geometry) {
-		var layer;
+	L.Path.include({
+		getJstsGeometry: function () {
+			if (!this._jstsGeometry)
+				this._jstsGeometry = L.jsts.leafletTojsts(this);
 
-		if (geometry.isEmpty()) {
+			return this._jstsGeometry;
+		},
 
-			layer = new this.constructor([], this.options);
+		jstsCopy: function (geometry) {
+			var layer;
 
-			if (this instanceof L.MultiPolygon)
-				geometry = L.jsts.EMPTY_MULTIPOLYGON;
-			else if (this instanceof L.MultiPolyline)
-				geometry = L.jsts.EMPTY_MULTILINESTRING;
-			else if (this instanceof L.Polygon)
-				geometry = L.jsts.EMPTY_POLYGON;
-			else if (this instanceof L.Polyline)
-				geometry = L.jsts.EMPTY_LINESTRING;
-			else
-				throw new Error('Unsupported L.Path type');
-		} else {
-			layer = L.jsts.jstsToleaflet(geometry, this.options);
+			if (geometry.isEmpty()) {
+
+				layer = new this.constructor([], this.options);
+
+				if (this instanceof L.MultiPolygon)
+					geometry = L.jsts.EMPTY_MULTIPOLYGON;
+				else if (this instanceof L.MultiPolyline)
+					geometry = L.jsts.EMPTY_MULTILINESTRING;
+				else if (this instanceof L.Polygon)
+					geometry = L.jsts.EMPTY_POLYGON;
+				else if (this instanceof L.Polyline)
+					geometry = L.jsts.EMPTY_LINESTRING;
+				else
+					throw new Error('Unsupported L.Path type');
+			} else {
+				layer = L.jsts.jstsToleaflet(geometry, this.options);
+			}
+
+			layer._jstsGeometry = geometry;
+
+			return layer;
+		},
+
+		redraw: function () {
+			delete this._jstsGeometry;
+			return redraw.apply(this, arguments);
+		}
+	});
+
+	Object.defineProperty(L.Path.prototype, "jsts", {
+
+		get: function() {
+			if (!this._jsts)
+				this._jsts = new L.Jsts(this);
+
+			return this._jsts;
 		}
 
-		layer._jstsGeometry = geometry;
+	});
 
-		return layer;
-	}
-});
-
-Object.defineProperty(L.Path.prototype, "jsts", {
-
-	get: function() {
-		if (!this._jsts)
-			this._jsts = new L.Jsts(this);
-
-		return this._jsts;
-	}
-
-});
+})();

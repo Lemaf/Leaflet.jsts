@@ -8,6 +8,11 @@
 			this._target = target;
 		},
 
+		clean: function() {
+			if (this._target.jstsClean)
+				this._target.jstsClean();
+		},
+
 		geometry: function () {
 			return this._target.getJstsGeometry();
 		},

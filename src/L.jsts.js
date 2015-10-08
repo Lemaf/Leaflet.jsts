@@ -22,7 +22,7 @@
 
 			} else if (geometry instanceof jsts.geom.LineString) {
 
-				latlngs = this.lineStringToCoordinates(geometry);
+				latlngs = this.lineStringToLatLngs(geometry);
 				Type = L.Polyline;
 
 			} else {
@@ -44,14 +44,14 @@
 			return this.coordinatesToLatLngs(linearRing.getCoordinates().slice(0, -1));
 		},
 
-		lineStringToCoordinates: function (lineString) {
+		lineStringToLatLngs: function (lineString) {
 			return lineString.getCoordinates().map(this.coordinateToLatLng, this);
 		},
 
 		multiLineStringToLatLngs: function (multiLineString) {
 			var latlngs = [];
 			for (var i = 0, l = multiLineString.getNumGeometries(); i < l; i++) {
-				latlngs.push(this.lineStringToCoordinates(multiLineString.getGeometryN(i)));
+				latlngs.push(this.lineStringToLatLngs(multiLineString.getGeometryN(i)));
 			}
 
 			return latlngs;
@@ -172,6 +172,22 @@
 
 		jstsToleaflet: function (geometry, options) {
 			return LEAFLET.from(geometry, options);
+		},
+
+		jstsToLatLngs: function (geometry) {
+			if (geometry instanceof jsts.geom.MultiPolygon)
+				return LEAFLET.multiPolygonToLatLngs(geometry);
+
+			if (geometry instanceof jsts.geom.MultiLineString)
+				return LEAFLET.multiLineStringToLatLngs(geometry);
+
+			if (geometry instanceof jsts.geom.Polygon)
+				return LEAFLET.polygonToLatLngs(geometry);
+
+			if (geometry instanceof jsts.geom.LineString)
+				return LEAFLET.lineStringToLatLngs(geometry);
+
+			throw new Error('Unsupported geometry');
 		}
 
 	});
