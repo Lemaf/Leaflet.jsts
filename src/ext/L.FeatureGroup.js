@@ -32,14 +32,27 @@ L.FeatureGroup.include({
 
 	jstsClean: function () {
 		delete this._jstsGeometry;
+	},
+
+	jstsOnLayerAdd: function (evt) {
+		if (evt.layer.editing) {
+			evt.layer.on('edit', this.jstsClean, this);
+		}
+	},
+
+	jstsOnLayerRemove: function (evt) {
+		if (evt.layer.editing) {
+			evt.layer.off('edit', this.jstsClean, this);
+		}
 	}
 
 });
 
 L.FeatureGroup.addInitHook(function() {
-
+	this.on('layeradd', this.jstsOnLayerAdd, this);
 	this.on('layeradd', this.jstsClean, this);
 	this.on('layerremove', this.jstsClean, this);
+	this.on('layerremove', this.jstsOnLayerRemove, this);
 
 });
 
