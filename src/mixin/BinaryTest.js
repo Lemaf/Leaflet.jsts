@@ -1,21 +1,25 @@
 (function () {
 
-	var METHODS = [
-		'intersects',
-		'within'
-	];
+	var METHODS = {
+		jstsIntersects: 'intersects',
+		jstsWithin: 'within'
+	};
 
 	L.jsts.BinaryTest = {};
 
 	var slice = Array.prototype.slice;
 
-	METHODS.forEach(function (methodName) {
-		L.jsts.BinaryTest[methodName] = function () {
-			return invokeTestMethod.apply(this, [methodName].concat(slice.call(arguments, 0)));
+	function defineMethod(leafletMethod, jstsMethod) {
+		L.jsts.BinaryTest[leafletMethod] = function () {
+			return invokeTestMethod.apply(this, [jstsMethod].concat(slice.call(arguments, 0)));
 		};
-	});
+	}
 
-	function invokeTestMethod (methodName, layer) {
+	for (var leafletMethod in METHODS) {
+		defineMethod(leafletMethod, METHODS[leafletMethod]);
+	}
+
+	function invokeTestMethod (jstsMethod, layer) {
 		var thisJstsGeometry = this.getJstsGeometry();
 		if (thisJstsGeometry.isEmpty())
 			return false;
@@ -25,10 +29,10 @@
 			return false;
 
 		if (arguments.length < 3)
-			return thisJstsGeometry[methodName](otherJstsGeometry);
+			return thisJstsGeometry[jstsMethod](otherJstsGeometry);
 		else {
 			var args = [otherJstsGeometry].concat(slice.call(arguments, 2));
-			return thisJstsGeometry[methodName].apply(thisJstsGeometry, args);
+			return thisJstsGeometry[jstsMethod].apply(thisJstsGeometry, args);
 		}
 	}
 	

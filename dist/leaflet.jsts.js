@@ -182,22 +182,26 @@
 })();
 (function () {
 
-	var METHODS = [
-		'intersects',
-		'within'
-	];
+	var METHODS = {
+		jstsIntersects: 'intersects',
+		jstsWithin: 'within'
+	};
 
 	L.jsts.BinaryTest = {};
 
 	var slice = Array.prototype.slice;
 
-	METHODS.forEach(function (methodName) {
-		L.jsts.BinaryTest[methodName] = function () {
-			return invokeTestMethod.apply(this, [methodName].concat(slice.call(arguments, 0)));
+	function defineMethod(leafletMethod, jstsMethod) {
+		L.jsts.BinaryTest[leafletMethod] = function () {
+			return invokeTestMethod.apply(this, [jstsMethod].concat(slice.call(arguments, 0)));
 		};
-	});
+	}
 
-	function invokeTestMethod (methodName, layer) {
+	for (var leafletMethod in METHODS) {
+		defineMethod(leafletMethod, METHODS[leafletMethod]);
+	}
+
+	function invokeTestMethod (jstsMethod, layer) {
 		var thisJstsGeometry = this.getJstsGeometry();
 		if (thisJstsGeometry.isEmpty())
 			return false;
@@ -207,10 +211,10 @@
 			return false;
 
 		if (arguments.length < 3)
-			return thisJstsGeometry[methodName](otherJstsGeometry);
+			return thisJstsGeometry[jstsMethod](otherJstsGeometry);
 		else {
 			var args = [otherJstsGeometry].concat(slice.call(arguments, 2));
-			return thisJstsGeometry[methodName].apply(thisJstsGeometry, args);
+			return thisJstsGeometry[jstsMethod].apply(thisJstsGeometry, args);
 		}
 	}
 	
@@ -219,32 +223,36 @@
 
 	L.jsts.BinaryTopology = {};
 
+	var METHODS = {
+		jstsIntersection: 'intersection',
+		jstsUnion: 'union',
+		jstsDifference: 'difference'
+	}
+
 	var slice = Array.prototype.slice;
 
-	var METHODS = [
-		'intersection',
-		'union',
-		'difference'
-	];
-
-	METHODS.forEach(function (methodName) {
-		L.jsts.BinaryTopology[methodName] = function () {
-			return invokeTopologyMethod.apply(this, [methodName].concat(slice.call(arguments, 0)));
+	function defineMethod(leafletMethod, jstsMethod) {
+		L.jsts.BinaryTopology[leafletMethod] = function () {
+			return invokeTopologyMethod.apply(this, [jstsMethod].concat(slice.call(arguments, 0)));
 		};
-	});
+	}
+
+	for (var leafletMethod in METHODS) {
+		defineMethod(leafletMethod, METHODS[leafletMethod]);
+	}
 
 
-	function invokeTopologyMethod (methodName, layer) {
+	function invokeTopologyMethod (jstsMethod, layer) {
 		var thisJstsGeometry = this.getJstsGeometry();
 		var otherJstsGeometry = layer.getJstsGeometry();
 
 		var result;
 
 		if (arguments.length < 3)
-			result = thisJstsGeometry[methodName](otherJstsGeometry);
+			result = thisJstsGeometry[jstsMethod](otherJstsGeometry);
 		else {
 			var args = [otherJstsGeometry].concat(slice.call(arguments, 2));
-			result = thisJstsGeometry[methodName].apply(thisJstsGeometry, args);
+			result = thisJstsGeometry[jstsMethod].apply(thisJstsGeometry, args);
 		}
 
 		if (!result.isEmpty())
