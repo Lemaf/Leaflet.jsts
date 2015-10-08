@@ -29,10 +29,7 @@
 				throw new Error('Unsupported geometry');
 			}
 
-			layer = new Type(latlngs, options);
-			layer._jstsGeometry = geometry;
-
-			return layer;
+			return new Type(latlngs, options);
 		},
 
 		coordinateToLatLng: function (coordinate) {
@@ -180,102 +177,94 @@
 	});
 
 })();
-(function () {
+;(function () {
 
-	var METHODS = {
-		jstsIntersects: 'intersects',
-		jstsWithin: 'within'
-	};
+	L.Jsts = L.Class.extend({
 
-	L.jsts.BinaryTest = {};
+		includes: [L.jsts.BinaryTest, L.jsts.BinaryTopology],
+
+		initialize: function (target) {
+			this._target = target;
+		},
+
+		geometry: function () {
+			return this._target.getJstsGeometry();
+		},
+
+		_apply: function (geometry) {
+			return this._target.jstsCopy(geometry);
+		}
+
+	});
 
 	var slice = Array.prototype.slice;
 
-	function defineMethod(leafletMethod, jstsMethod) {
-		L.jsts.BinaryTest[leafletMethod] = function () {
-			return invokeTestMethod.apply(this, [jstsMethod].concat(slice.call(arguments, 0)));
+	var BINARY_TEST_METHODS = {
+		intersects: 'intersects',
+		within: 'within'
+	};
+
+	function defineBinaryTestMethod(leafletMethod, jstsMethod) {
+		L.Jsts.prototype[leafletMethod] = function () {
+			return invokeBinaryTestMethod.apply(this, [jstsMethod].concat(slice.call(arguments, 0)));
 		};
 	}
 
-	for (var leafletMethod in METHODS) {
-		defineMethod(leafletMethod, METHODS[leafletMethod]);
+	for (var leafletMethod in BINARY_TEST_METHODS) {
+		defineBinaryTestMethod(leafletMethod, BINARY_TEST_METHODS[leafletMethod]);
 	}
 
-	function invokeTestMethod (jstsMethod, layer) {
-		var thisJstsGeometry = this.getJstsGeometry();
-		if (thisJstsGeometry.isEmpty())
+	function invokeBinaryTestMethod (jstsMethod, layer) {
+		var thisGeometry = this.geometry();
+		if (thisGeometry.isEmpty())
 			return false;
 
-		var otherJstsGeometry = layer.getJstsGeometry();
-		if (otherJstsGeometry.isEmpty())
+		var thatGeometry = layer.jsts.geometry();
+		if (thatGeometry.isEmpty())
 			return false;
 
 		if (arguments.length < 3)
-			return thisJstsGeometry[jstsMethod](otherJstsGeometry);
+			return thisGeometry[jstsMethod](thatGeometry);
 		else {
-			var args = [otherJstsGeometry].concat(slice.call(arguments, 2));
-			return thisJstsGeometry[jstsMethod].apply(thisJstsGeometry, args);
+			var args = [thatGeometry].concat(slice.call(arguments, 2));
+			return thisGeometry[jstsMethod].apply(thisGeometry, args);
 		}
 	}
-	
-})();
-;(function () {
 
-	L.jsts.BinaryTopology = {};
-
-	var METHODS = {
-		jstsIntersection: 'intersection',
-		jstsUnion: 'union',
-		jstsDifference: 'difference'
+	var BINARY_TOPOLOGY_METHODS = {
+		intersection: 'intersection',
+		union: 'union',
+		difference: 'difference'
 	}
 
-	var slice = Array.prototype.slice;
-
-	function defineMethod(leafletMethod, jstsMethod) {
-		L.jsts.BinaryTopology[leafletMethod] = function () {
-			return invokeTopologyMethod.apply(this, [jstsMethod].concat(slice.call(arguments, 0)));
+	function defineBinaryTopologyMethod(leafletMethod, jstsMethod) {
+		L.Jsts.prototype[leafletMethod] = function () {
+			return invokeBinaryTopologyMethod.apply(this, [jstsMethod].concat(slice.call(arguments, 0)));
 		};
 	}
 
-	for (var leafletMethod in METHODS) {
-		defineMethod(leafletMethod, METHODS[leafletMethod]);
+	for (var leafletMethod in BINARY_TOPOLOGY_METHODS) {
+		defineBinaryTopologyMethod(leafletMethod, BINARY_TOPOLOGY_METHODS[leafletMethod]);
 	}
 
-
-	function invokeTopologyMethod (jstsMethod, layer) {
-		var thisJstsGeometry = this.getJstsGeometry();
-		var otherJstsGeometry = layer.getJstsGeometry();
+	function invokeBinaryTopologyMethod (jstsMethod, layer) {
+		var thisGeometry = this.geometry();
+		var thatGeometry = layer.jsts.geometry();
 
 		var result;
 
 		if (arguments.length < 3)
-			result = thisJstsGeometry[jstsMethod](otherJstsGeometry);
+			result = thisGeometry[jstsMethod](thatGeometry);
 		else {
-			var args = [otherJstsGeometry].concat(slice.call(arguments, 2));
-			result = thisJstsGeometry[jstsMethod].apply(thisJstsGeometry, args);
+			var args = [thatGeometry].concat(slice.call(arguments, 2));
+			result = thisGeometry[jstsMethod].apply(thisGeometry, args);
 		}
 
-		if (!result.isEmpty())
-			return L.jsts.jstsToleaflet(result, this.options);
-
-		layer = new this.constructor([], this.options);
-
-		if (this instanceof L.MultiPolygon)
-			layer._jstsGeometry = L.jsts.EMPTY_MULTIPOLYGON;
-		else if (this instanceof L.MultiPolyline)
-			layer._jstsGeometry = L.jsts.EMPTY_MULTILINESTRING;
-		else if (this instanceof L.Polygon)
-			layer._jstsGeometry = L.jsts.EMPTY_POLYGON;
-		else if (this instanceof L.Polyline)
-			layer._jstsGeometry = L.jsts.EMPTY_LINESTRING;
-		else
-			throw new Error('Unsupported L.Path type');
-
-		return layer;
+		return this._apply(result);
 	}
-
 })();
-L.FeatureGroup.include(L.jsts.BinaryTest);
+
+// L.FeatureGroup.include(L.jsts.BinaryTest);
 
 L.FeatureGroup.include({
 
@@ -308,20 +297,54 @@ L.FeatureGroup.include({
 
 });
 
-L.FeatureGroup.addInitHook(function() {
+// L.FeatureGroup.addInitHook(function() {
 
-	this.on('layeradd', this._cleanJstsGeometry, this);
-	this.on('layerremove', this._cleanJstsGeometry, this);
+// 	this.on('layeradd', this._cleanJstsGeometry, this);
+// 	this.on('layerremove', this._cleanJstsGeometry, this);
 
-});
-L.Path.include(L.jsts.BinaryTest);
-L.Path.include(L.jsts.BinaryTopology);
-
+// });
 L.Path.include({
 	getJstsGeometry: function () {
 		if (!this._jstsGeometry)
 			this._jstsGeometry = L.jsts.leafletTojsts(this);
 
 		return this._jstsGeometry;
+	},
+
+	jstsCopy: function (geometry) {
+		var layer;
+
+		if (geometry.isEmpty()) {
+
+			layer = new this.constructor([], this.options);
+
+			if (this instanceof L.MultiPolygon)
+				geometry = L.jsts.EMPTY_MULTIPOLYGON;
+			else if (this instanceof L.MultiPolyline)
+				geometry = L.jsts.EMPTY_MULTILINESTRING;
+			else if (this instanceof L.Polygon)
+				geometry = L.jsts.EMPTY_POLYGON;
+			else if (this instanceof L.Polyline)
+				geometry = L.jsts.EMPTY_LINESTRING;
+			else
+				throw new Error('Unsupported L.Path type');
+		} else {
+			layer = L.jsts.jstsToleaflet(geometry, this.options);
+		}
+
+		layer._jstsGeometry = geometry;
+
+		return layer;
 	}
+});
+
+Object.defineProperty(L.Path.prototype, "jsts", {
+
+	get: function() {
+		if (!this._jsts)
+			this._jsts = new L.Jsts(this);
+
+		return this._jsts;
+	}
+
 });

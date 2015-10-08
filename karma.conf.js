@@ -19,8 +19,8 @@ module.exports = function(config) {
       'lib/jsts/lib/jsts.js',
       'lib/leaflet/dist/leaflet.js',
       'lib/chai/chai.js',
-      'src/*.js',
-      'src/mixin/*.js',
+      'src/L.jsts.js',
+      'src/L.Jsts.js',
       'src/ext/*.js',
       'tests/**/*Spec.js'
     ],

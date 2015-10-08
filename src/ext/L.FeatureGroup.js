@@ -1,4 +1,4 @@
-L.FeatureGroup.include(L.jsts.BinaryTest);
+// L.FeatureGroup.include(L.jsts.BinaryTest);
 
 L.FeatureGroup.include({
 
@@ -31,9 +31,9 @@ L.FeatureGroup.include({
 
 });
 
-L.FeatureGroup.addInitHook(function() {
+// L.FeatureGroup.addInitHook(function() {
 
-	this.on('layeradd', this._cleanJstsGeometry, this);
-	this.on('layerremove', this._cleanJstsGeometry, this);
+// 	this.on('layeradd', this._cleanJstsGeometry, this);
+// 	this.on('layerremove', this._cleanJstsGeometry, this);
 
-});
+// });

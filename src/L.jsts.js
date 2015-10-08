@@ -29,10 +29,7 @@
 				throw new Error('Unsupported geometry');
 			}
 
-			layer = new Type(latlngs, options);
-			layer._jstsGeometry = geometry;
-
-			return layer;
+			return new Type(latlngs, options);
 		},
 
 		coordinateToLatLng: function (coordinate) {

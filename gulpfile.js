@@ -21,6 +21,7 @@ gulp.task('concat:js', ['clean:dist'], function() {
 	return gulp.src([
 		'src/L.jsts.js',
 		'src/mixin/*.js',
+		'src/L.Jsts.js',
 		'src/ext/*.js'
 	])
 	.pipe(concat('leaflet.jsts.js'))
