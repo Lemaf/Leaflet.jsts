@@ -264,8 +264,6 @@
 	}
 })();
 
-// L.FeatureGroup.include(L.jsts.BinaryTest);
-
 L.FeatureGroup.include({
 
 	getJstsGeometry: function () {
@@ -291,18 +289,34 @@ L.FeatureGroup.include({
 		return this._jstsGeometry;
 	},
 
+	jstsCopy: function (geometry) {
+		if (geometry.isEmpty())
+			return new this.constructor([]);
+
+		throw new Error('Unsupported operation!');
+	},
+
 	_cleanJstsGeometry: function () {
 		delete this._jstsGeometry;
 	}
 
 });
 
-// L.FeatureGroup.addInitHook(function() {
+L.FeatureGroup.addInitHook(function() {
 
-// 	this.on('layeradd', this._cleanJstsGeometry, this);
-// 	this.on('layerremove', this._cleanJstsGeometry, this);
+	this.on('layeradd', this._cleanJstsGeometry, this);
+	this.on('layerremove', this._cleanJstsGeometry, this);
 
-// });
+});
+
+Object.defineProperty(L.FeatureGroup.prototype, 'jsts', {
+	get: function () {
+		if (!this._jsts)
+			this._jsts = new L.Jsts(this);
+
+		return this._jsts;
+	}
+});
 L.Path.include({
 	getJstsGeometry: function () {
 		if (!this._jstsGeometry)
