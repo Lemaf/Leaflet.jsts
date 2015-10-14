@@ -1,7 +1,7 @@
 describe('Leaflet to Jsts', function() {
 
 	describe('should create geometry', function() {
-		
+
 		it('valid', function() {
 			var leaflet = L.polygon([[-21,-45], [-22,-46], [-20,-45]]);
 			var geometry = leaflet.getJstsGeometry();
