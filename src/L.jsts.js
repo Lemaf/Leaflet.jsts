@@ -188,8 +188,67 @@
 				return LEAFLET.lineStringToLatLngs(geometry);
 
 			throw new Error('Unsupported geometry');
-		}
+		},
 
+		union: function (geoA, geoB, expectedType) {
+			if (geoA.isEmpty())
+				return geoB;
+
+			if (geoB.isEmpty())
+				return geoA;
+
+			var union = geoA.union(geoB);
+
+			if (union.isGeometryCollectionBase()) {
+				var subGeometry, geometries = [];
+				for (var i = 0, il = union.getNumGeometries(); i < il; i++) {
+					subGeometry = union.getGeometryN(i);
+
+					if (subGeometry.getGeometryType().endsWith(expectedType)) {
+						if (subGeometry.getGeometryType().startsWith("Multi")) {
+							for (var j = 0, jl = subGeometry.getNumGeometries(); j < jl; j++) {
+								geometries.push(subGeometry.getGeometryN(j));
+							}
+						} else {
+							geometries.push(subGeometry);
+						}
+					}
+				}
+
+				if (geometries.length > 1) {
+					switch (expectedType) {
+						case 'Polygon':
+						case 'MultiPolygon':
+							return FACTORY.createMultiPolygon(geometries);
+
+						case 'LineString':
+						case 'MultiLineString':
+							return FACTORY.createMultiLineString(geometries);
+
+						default:
+							throw new Error('Invalid expectedType ' + expectedType);
+					}
+				} else if (geometries.length) {
+					return geometries[0];
+				} else {
+					switch (expectedType) {
+						case 'Polygon':
+							return EMPTY_POLYGON;
+						case 'MultiPolygon':
+							return EMPTY_MULTIPOLYGON;
+						case 'LineString':
+							return EMPTY_LINESTRING;
+						case 'MultiLineString':
+							return EMPTY_MULTILINESTRING;
+
+						default:
+							throw new Error('Invalid expectedType ' + expectedType);
+					}
+				}
+			} else {
+				return union;
+			}
+		}
 	});
 
 })();

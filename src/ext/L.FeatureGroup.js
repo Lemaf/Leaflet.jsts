@@ -10,7 +10,7 @@ L.FeatureGroup.include({
 
 				// TODO: Slow...
 				if (jstsGeometry) {
-					jstsGeometry = jstsGeometry.union(localGeometry);
+					jstsGeometry = L.jsts.union(jstsGeometry, localGeometry, 'Polygon');
 				} else {
 					jstsGeometry = localGeometry;
 				}
