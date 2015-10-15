@@ -4,7 +4,8 @@ bower = require('gulp-bower'),
 concat = require('gulp-concat'),
 uglify = require('gulp-uglify'),
 rename = require('gulp-rename'),
-del = require('del')
+del = require('del'),
+jshint = require('gulp-jshint')
 ;
 
 gulp.task('clean:dist', function() {
@@ -16,7 +17,14 @@ gulp.task('bower', function() {
 		.pipe(gulp.dest('lib/'))
 });
 
-gulp.task('concat:js', ['clean:dist'], function() {
+gulp.task('jshint', function() {
+	return gulp.src(['./src/**/*.js'])
+		.pipe(jshint())
+		.pipe(jshint.reporter('default'))
+		.pipe(jshint.reporter('fail'));
+});
+
+gulp.task('concat:js', ['jshint', 'clean:dist'], function() {
 
 	return gulp.src([
 		'src/L.jsts.js',

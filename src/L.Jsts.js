@@ -23,7 +23,7 @@
 
 	});
 
-	var slice = Array.prototype.slice;
+	var slice = Array.prototype.slice, leafletMethod;
 
 	var BINARY_TEST_METHODS = {
 		intersects: 'intersects',
@@ -36,7 +36,7 @@
 		};
 	}
 
-	for (var leafletMethod in BINARY_TEST_METHODS) {
+	for (leafletMethod in BINARY_TEST_METHODS) {
 		defineBinaryTestMethod(leafletMethod, BINARY_TEST_METHODS[leafletMethod]);
 	}
 
@@ -61,7 +61,7 @@
 		intersection: 'intersection',
 		union: 'union',
 		difference: 'difference'
-	}
+	};
 
 	function defineBinaryTopologyMethod(leafletMethod, jstsMethod) {
 		L.Jsts.prototype[leafletMethod] = function () {
@@ -69,7 +69,7 @@
 		};
 	}
 
-	for (var leafletMethod in BINARY_TOPOLOGY_METHODS) {
+	for (leafletMethod in BINARY_TOPOLOGY_METHODS) {
 		defineBinaryTopologyMethod(leafletMethod, BINARY_TOPOLOGY_METHODS[leafletMethod]);
 	}
 

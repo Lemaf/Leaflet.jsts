@@ -59,6 +59,7 @@
 
 		multiPolygonToLatLngs: function (multiPolygon) {
 			var latlngs = [];
+
 			for (var i = 0, l = multiPolygon.getNumGeometries(); i < l; i++) {
 				latlngs.push(this.polygonToLatLngs(multiPolygon.getGeometryN(i)));
 			}
@@ -190,6 +191,65 @@
 			throw new Error('Unsupported geometry');
 		},
 
+		filter: function (collection, expectedType) {
+
+			var subGeometry, geometries = [];
+
+			for (var i = 0, il = collection.getNumGeometries(); i < il; i++) {
+				subGeometry = collection.getGeometryN(i);
+
+				if (subGeometry.getGeometryType().endsWith(expectedType)) {
+					if (subGeometry.getGeometryType().startsWith("Multi")) {
+						for (var j = 0, jl = subGeometry.getNumGeometries(); j < jl; j++) {
+							geometries.push(subGeometry.getGeometryN(j));
+						}
+					} else {
+						geometries.push(subGeometry);
+					}
+				}
+			}
+
+			if (geometries.length > 1) {
+				switch (expectedType) {
+					case 'Polygon':
+					case 'MultiPolygon':
+						return FACTORY.createMultiPolygon(geometries);
+
+					case 'LineString':
+					case 'MultiLineString':
+						return FACTORY.createMultiLineString(geometries);
+
+					default:
+						throw new Error('Invalid expectedType ' + expectedType);
+				}
+			} else if (geometries.length) {
+				return geometries[0];
+			} else {
+				switch (expectedType) {
+					case 'Polygon':
+						return EMPTY_POLYGON;
+					case 'MultiPolygon':
+						return EMPTY_MULTIPOLYGON;
+					case 'LineString':
+						return EMPTY_LINESTRING;
+					case 'MultiLineString':
+						return EMPTY_MULTILINESTRING;
+
+					default:
+						throw new Error('Invalid expectedType ' + expectedType);
+				}
+			}
+		},
+
+		intersection: function (geoA, geoB, expectedType) {
+			var intersection = geoA.intersection(geoB);
+
+			if (intersection.isGeometryCollectionBase())
+				return this.filter(intersection, expectedType);
+			else
+				return intersection;
+		},
+
 		union: function (geoA, geoB, expectedType) {
 			if (geoA.isEmpty())
 				return geoB;
@@ -200,51 +260,7 @@
 			var union = geoA.union(geoB);
 
 			if (union.isGeometryCollectionBase()) {
-				var subGeometry, geometries = [];
-				for (var i = 0, il = union.getNumGeometries(); i < il; i++) {
-					subGeometry = union.getGeometryN(i);
-
-					if (subGeometry.getGeometryType().endsWith(expectedType)) {
-						if (subGeometry.getGeometryType().startsWith("Multi")) {
-							for (var j = 0, jl = subGeometry.getNumGeometries(); j < jl; j++) {
-								geometries.push(subGeometry.getGeometryN(j));
-							}
-						} else {
-							geometries.push(subGeometry);
-						}
-					}
-				}
-
-				if (geometries.length > 1) {
-					switch (expectedType) {
-						case 'Polygon':
-						case 'MultiPolygon':
-							return FACTORY.createMultiPolygon(geometries);
-
-						case 'LineString':
-						case 'MultiLineString':
-							return FACTORY.createMultiLineString(geometries);
-
-						default:
-							throw new Error('Invalid expectedType ' + expectedType);
-					}
-				} else if (geometries.length) {
-					return geometries[0];
-				} else {
-					switch (expectedType) {
-						case 'Polygon':
-							return EMPTY_POLYGON;
-						case 'MultiPolygon':
-							return EMPTY_MULTIPOLYGON;
-						case 'LineString':
-							return EMPTY_LINESTRING;
-						case 'MultiLineString':
-							return EMPTY_MULTILINESTRING;
-
-						default:
-							throw new Error('Invalid expectedType ' + expectedType);
-					}
-				}
+				return this.filter(union, expectedType);
 			} else {
 				return union;
 			}
