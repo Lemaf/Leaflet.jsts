@@ -27,7 +27,8 @@
 
 	var BINARY_TEST_METHODS = {
 		intersects: 'intersects',
-		within: 'within'
+		within: 'within',
+		disjoint: 'disjoint'
 	};
 
 	function defineBinaryTestMethod(leafletMethod, jstsMethod) {
