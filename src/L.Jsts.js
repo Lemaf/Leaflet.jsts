@@ -43,12 +43,8 @@
 
 	function invokeBinaryTestMethod (jstsMethod, layer) {
 		var thisGeometry = this.geometry();
-		if (thisGeometry.isEmpty())
-			return false;
 
 		var thatGeometry = layer.jsts.geometry();
-		if (thatGeometry.isEmpty())
-			return false;
 
 		if (arguments.length < 3)
 			return thisGeometry[jstsMethod](thatGeometry);

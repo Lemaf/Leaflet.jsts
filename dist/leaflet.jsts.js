@@ -264,7 +264,27 @@
 			} else {
 				return union;
 			}
+		},
+
+		difference: function(geoA, geoB, expectedType) {
+
+			if (geoA.isEmpty())
+				return geoB;
+
+			if (geoB.isEmpty())
+				return geoA;
+
+			var difference = geoA.difference(geoB);
+
+			if (difference.isGeometryCollectionBase()) {
+				return this.filter(difference, expectedType);
+			} else {
+				return difference;
+			}
+
 		}
+
+
 	});
 
 })();
@@ -313,12 +333,8 @@
 
 	function invokeBinaryTestMethod (jstsMethod, layer) {
 		var thisGeometry = this.geometry();
-		if (thisGeometry.isEmpty())
-			return false;
 
 		var thatGeometry = layer.jsts.geometry();
-		if (thatGeometry.isEmpty())
-			return false;
 
 		if (arguments.length < 3)
 			return thisGeometry[jstsMethod](thatGeometry);

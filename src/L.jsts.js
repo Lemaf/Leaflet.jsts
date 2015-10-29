@@ -264,7 +264,27 @@
 			} else {
 				return union;
 			}
+		},
+
+		difference: function(geoA, geoB, expectedType) {
+
+			if (geoA.isEmpty())
+				return geoB;
+
+			if (geoB.isEmpty())
+				return geoA;
+
+			var difference = geoA.difference(geoB);
+
+			if (difference.isGeometryCollectionBase()) {
+				return this.filter(difference, expectedType);
+			} else {
+				return difference;
+			}
+
 		}
+
+
 	});
 
 })();
