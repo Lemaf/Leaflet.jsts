@@ -97,8 +97,12 @@
 				return FACTORY.createMultiLineString(geometries);
 
 			} else if (layer instanceof L.Polygon) {
-
 				coordinates = this.multiLatLngsToCoordinates(layer.getLatLngs());
+
+				if (layer._holes) {
+					coordinates.push.apply(coordinates, layer._holes.map(this.latLngsToCoordinates, this));
+				}
+
 				return this.coordinatesToPolygon(coordinates);
 
 			} else if (layer instanceof L.Polyline) {
