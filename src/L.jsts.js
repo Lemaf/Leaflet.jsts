@@ -245,8 +245,20 @@
 			}
 		},
 
-		intersection: function (geoA, geoB, expectedType) {
-			var intersection = geoA.intersection(geoB);
+		intersection: function (geoA, geoB, expectedType, fixerBuffer) {
+			var intersection;
+			
+			try {
+				intersection = geoA.intersection(geoB);
+			} catch (error) {
+				if(!geoA.isValid()){
+					geoA = geoA.buffer(fixerBuffer);
+				}
+				if(!geoB.isValid()){
+					geoB = geoB.buffer(fixerBuffer);
+				}
+				intersection = geoA.intersection(geoB);
+			}
 
 			if (intersection.isGeometryCollectionBase())
 				return this.filter(intersection, expectedType);

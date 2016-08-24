@@ -1,6 +1,6 @@
 {
   "name": "leaflet.jsts",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Leaflet + jsts = :) ?",
   "main": "dist/leaflet.jsts.js",
   "scripts": {
